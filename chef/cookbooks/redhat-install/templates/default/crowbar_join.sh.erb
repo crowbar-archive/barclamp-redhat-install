@@ -91,7 +91,7 @@ post_state $HOSTNAME "readying"
 final_state="ready"
 mkdir -p /etc/chef
 curl -o /etc/chef/validation.pem \
-    "http://$HTTP_SERVER/redhat_dvd/validation.pem"
+    "http://$HTTP_SERVER/validation.pem"
 
 
 # Make sure that the client knows how to talk to the server
