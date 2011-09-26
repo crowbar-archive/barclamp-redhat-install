@@ -86,6 +86,7 @@ post_state $HOSTNAME "installing"
 
 rsyslog_dir="/etc/rsyslog.d"
 mkdir -p "$rsyslog_dir"
+echo '$IncludeConfig /etc/rsyslog.d/*.conf' >>/etc/rsyslog.conf
 if [ ! -f "$rsyslog_dir/10-crowbar-client.conf" ]; then
     echo "*.* @@${IP}" > "$rsyslog_dir/10-crowbar-client.conf"
     if ! curl -s -o "$rsyslog_dir/00-crowbar-debug.conf" \
