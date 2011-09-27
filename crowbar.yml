@@ -20,6 +20,8 @@ barclamp:
   display: Red Hat Install
   description: RHEL Installation
   version: 0
+  member:
+    - crowbar
 
 crowbar:
   layout: 1
