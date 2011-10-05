@@ -118,7 +118,7 @@ di=$(find /usr -path '*/ohai-0.6.6/lib/ohai/plugins/linux' -type d)
     [[ -f $di/ohai.patch ]] && (
 	cd "$di"
 	patch -p0 <ohai.patch
-    }
+    )
 }
 
 log_to chef service chef-client stop
