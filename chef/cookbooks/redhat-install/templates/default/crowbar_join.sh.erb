@@ -108,7 +108,18 @@ echo "chef_server_url \"http://$IP:4000\"" >/etc/chef/client.rb
 echo "Installing Chef..."
 
 log_to yum yum -q -y update
-log_to yum yum -q -y install rubygem-chef
+log_to yum yum -q -y install rubygem-chef patch
+
+# Install ohai patch if needed.
+di=$(find /usr -path '*/ohai-0.6.6/lib/ohai/plugins/linux' -type d)
+[[ $di && -d $di ]] && {
+    curl -o "$di/ohai.patch" \
+	"http://$HTTP_SERVER/redhat_dvd/extra/patches/ohai-linux-platform.patch"
+    [[ -f $di/ohai.patch ]] && (
+	cd "$di"
+	patch -p0 <ohai.patch
+    }
+}
 
 log_to chef service chef-client stop
 log_to chef killall chef-client
