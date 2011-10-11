@@ -14,7 +14,7 @@
 #
 
 # Everyone needs chef-client running - redhat doesn't chkconfig this by default.
-bash "Install pxelinux.0" do
+bash "Check config chef-client" do
   code "/sbin/chkconfig --level 345 chef-client on"
   not_if "/sbin/chkconfig --list chef-client | grep -q on"
 end
