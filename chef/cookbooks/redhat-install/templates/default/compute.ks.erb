@@ -84,6 +84,10 @@ post_state() {
 
 post_state $HOSTNAME "installing"
 
+#"Blacklisting IPv6".
+echo "blacklist ipv6" >>/etc/modprobe.d/blacklist-ipv6.conf
+echo "options ipv6 disable=1" >>/etc/modprobe.d/blacklist-ipv6.conf
+
 rsyslog_dir="/etc/rsyslog.d"
 mkdir -p "$rsyslog_dir"
 echo '$IncludeConfig /etc/rsyslog.d/*.conf' >>/etc/rsyslog.conf
