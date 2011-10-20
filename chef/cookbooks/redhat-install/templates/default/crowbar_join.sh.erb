@@ -86,6 +86,15 @@ sync_time() {
     done
 }
 
+# Speed up SSH on redhat -- without this, we can see up to 30 second
+# delays.
+if ! grep -q '^UseDNS.*no' /etc/ssh/sshd_config; then
+    sed -i -e 's/^\(GSSAPI\)/#\1/' \
+	-e 's/#\(UseDNS.*\)yes/\1no/' \
+	/etc/ssh/sshd_config
+    service sshd restart
+fi
+
 # Clean up install droppings
 rm -f /update_system2.sh
 rm -f /net-post-install.sh
