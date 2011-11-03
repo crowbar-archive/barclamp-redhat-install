@@ -16,7 +16,7 @@
 #
 
 barclamp:
-  name: redhat-install
+  name: redhat_install
   display: Red Hat Install
   description: RHEL Installation
   version: 0
