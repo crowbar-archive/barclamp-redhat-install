@@ -109,35 +109,78 @@ mkdir -p /etc/chef
 curl -o /etc/chef/validation.pem \
     "http://$HTTP_SERVER/validation.pem"
 
+if [[ ! -x /etc/init.d/bluepill ]]; then 
+    # Make sure that the client knows how to talk to the server
+    echo "chef_server_url \"http://$IP:4000\"" >/etc/chef/client.rb
 
-# Make sure that the client knows how to talk to the server
-echo "chef_server_url \"http://$IP:4000\"" >/etc/chef/client.rb
+    # Install Chef
+    echo "Installing Chef..."
 
-# Install Chef
-echo "Installing Chef..."
+    while ! log_to yum yum -q -y update ; do
+	echo "Failed to do yum update, wait and try again"
+	sleep 1
+    done
+    while ! log_to yum yum -q -y install rubygem-chef patch ; do
+	echo "Failed to do yum install, wait and try again"
+	sleep 1
+    done
 
-while ! log_to yum yum -q -y update ; do
-  echo "Failed to do yum update, wait and try again"
-  sleep 1
-done
-while ! log_to yum yum -q -y install rubygem-chef patch ; do
-  echo "Failed to do yum install, wait and try again"
-  sleep 1
-done
+    # Install ohai patch if needed.
+    di=$(find /usr -path '*/ohai-0.6.6/lib/ohai/plugins/linux' -type d)
+    [[ $di && -d $di ]] && {
+	curl -o "$di/ohai.patch" \
+	    "http://$HTTP_SERVER/redhat_dvd/extra/patches/ohai-linux-platform.patch"
+	[[ -f $di/ohai.patch ]] && (
+	    cd "$di"
+	    patch -p0 <ohai.patch
+	)
+    }
 
-# Install ohai patch if needed.
-di=$(find /usr -path '*/ohai-0.6.6/lib/ohai/plugins/linux' -type d)
-[[ $di && -d $di ]] && {
-    curl -o "$di/ohai.patch" \
-	"http://$HTTP_SERVER/redhat_dvd/extra/patches/ohai-linux-platform.patch"
-    [[ -f $di/ohai.patch ]] && (
-	cd "$di"
-	patch -p0 <ohai.patch
-    )
-}
+    log_to chef service chef-client stop
+    log_to chef killall chef-client
+    log_to chef chkconfig chef-client off
+    chmod 644 /etc/init.d/chef-client
+        # Make sure that gem-installed binaries are in $PATH for everyone.
+    read gem_bin < <(gem environment | awk '-F:' '/EXECUTABLE DIRECTORY/ {print $2}')
+    if [[ ! $PATH =~ (^|:)$gem_bin(:|$) ]]; then
+	export PATH="$PATH:$gem_bin"
+	echo $PATH
+	sed -i "/PATH=/ s@PATH=.*@PATH=\"$PATH\"@" /etc/environment
+	echo "PATH=\"$PATH\"" >/etc/environment
+    fi
 
-log_to chef service chef-client stop
-log_to chef killall chef-client
+    # Fix up our gem sources and install bluepill
+    gem source -a "http://$IP:3001/"
+    gem source -r http://rubygems.org/
+    gem install bluepill
+    mkdir -p /etc/bluepill
+    curl -o /etc/bluepill/chef-client.pill http://$IP:3001/chef-client.pill
+    # Create an init script for bluepill
+    cat > /etc/init.d/bluepill <<EOF
+#!/bin/bash
+# chkconfig: 2345 10 90
+# description: Bluepill Daemon runner
+PATH=$PATH
+case \$1 in
+    start) for pill in /etc/bluepill/*.pill; do
+              [[ -f \$pill ]] || continue
+              bluepill load "\$pill"
+           done;;
+    stop) bluepill stop
+          bluepill quit;;
+    status) if pidof bluepilld; then
+             echo "Bluepill is running."
+             exit 0
+            else
+             echo "Bluepill is not running."
+             exit 1
+            fi;;
+    *) echo "\$1: Not supported.";;
+esac   
+EOF
+    chmod 755 /etc/init.d/bluepill
+fi
+
 
 # Run Chef
 echo "Syncing time (pass 2)"
@@ -192,8 +235,7 @@ fi
 post_state $HOSTNAME "$final_state"
 
 log_to time service ntpd start
-# Chef client restart / start aren't implemented quite right.  So make sure we really start the chef-client fresh
-log_to chef service chef-client stop
-log_to chef service chef-client start
+# Fire up bluepill, and let it keep chef-client up.
+service bluepill start
 
 echo "Done"
