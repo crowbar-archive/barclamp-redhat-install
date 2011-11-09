@@ -21,6 +21,7 @@ use_local_security = node[:provisioner][:use_local_security]
 image="redhat_install"
 rel_path= "redhat_dvd/#{image}"
 install_path = "/tftpboot/#{rel_path}"
+pxecfg_path="/tftpboot/redhat_dvd/discovery/pxelinux.cfg"
 
 admin_web="http://#{admin_ip}:#{web_port}/redhat_dvd"
 append_line="method=#{admin_web} ks=#{admin_web}/#{image}/compute.ks ksdevice=bootif initrd=../images/pxeboot/initrd.img"
@@ -37,21 +38,6 @@ directory "#{install_path}" do
   recursive true  
 end
 
-directory "#{install_path}/pxelinux.cfg"
-
-# Everyone needs a pxelinux.0
-bash "Install pxelinux.0" do
-  code "cp /usr/lib/syslinux/pxelinux.0 #{install_path}"
-  not_if do ::File.exists?("#{install_path}/pxelinux.0") end
-end
-
-dhcp_group image do
-  action :add
-  options [ "option domain-name \"#{domain_name}\"",
-              "option dhcp-client-state 2",
-              "filename \"#{rel_path}/pxelinux.0\"" ]
-end
-
 template "#{install_path}/compute.ks" do
   source "compute.ks.erb"
   owner "apache"
@@ -61,7 +47,7 @@ template "#{install_path}/compute.ks" do
   :web_port => web_port)  
 end
 
-template "#{install_path}/pxelinux.cfg/default" do
+template "#{pxecfg_path}/#{image}" do
   mode 0644
   owner "root"
   group "root"
