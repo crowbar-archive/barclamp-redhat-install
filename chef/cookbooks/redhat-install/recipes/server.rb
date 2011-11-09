@@ -39,9 +39,10 @@ directory "#{install_path}" do
 end
 
 template "#{install_path}/compute.ks" do
+  mode 0644
   source "compute.ks.erb"
-  owner "apache"
-  group "apache"
+  owner "root"
+  group "root"
   variables(
   :admin_node_ip => admin_ip,
   :web_port => web_port)  
