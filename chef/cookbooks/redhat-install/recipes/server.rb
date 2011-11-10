@@ -21,10 +21,10 @@ use_local_security = node[:provisioner][:use_local_security]
 image="redhat_install"
 rel_path= "redhat_dvd/#{image}"
 install_path = "/tftpboot/#{rel_path}"
-pxecfg_path="/tftpboot/redhat_dvd/discovery/pxelinux.cfg"
+pxecfg_path="/tftpboot/discovery/pxelinux.cfg"
 
 admin_web="http://#{admin_ip}:#{web_port}/redhat_dvd"
-append_line="method=#{admin_web} ks=#{admin_web}/#{image}/compute.ks ksdevice=bootif initrd=../images/pxeboot/initrd.img"
+append_line="method=#{admin_web} ks=#{admin_web}/#{image}/compute.ks ksdevice=bootif initrd=../redhat_dvd/images/pxeboot/initrd.img"
 
 if node[:provisioner][:use_serial_console]
   append_line = "console=tty0 console=ttyS1,115200n8 " + append_line
@@ -55,7 +55,7 @@ template "#{pxecfg_path}/#{image}" do
   source "default.erb"
   variables(:append_line => "append " + append_line,
             :install_name => image,  
-            :kernel => "../images/pxeboot/vmlinuz")
+            :kernel => "../redhat_dvd/images/pxeboot/vmlinuz")
 end
 
 template "#{install_path}/crowbar_join.sh" do
