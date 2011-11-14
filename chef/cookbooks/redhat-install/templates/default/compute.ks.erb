@@ -49,19 +49,19 @@ export PS4='${BASH_SOURCE}@${LINENO}(${FUNCNAME[0]}): '
 cat >/etc/yum.repos.d/os-base.repo <<EOF
 [os-base]
 name=OS Base Repo
-baseurl=http://<%= @admin_node_ip %>:<%= @web_port %>/redhat_dvd/Server
+baseurl=<%= @os_repo %>
 gpgcheck=0
 EOF
 
 cat >/etc/yum.repos.d/crowbar-xtras.repo <<EOF
 [crowbar-xtras]
 name=Crowbar Extra Packages
-baseurl=http://<%= @admin_node_ip %>:<%= @web_port %>/redhat_dvd/extra/pkgs
+baseurl=<%= @crowbar_repo %>
 gpgcheck=0
 EOF
 
 HTTP_SERVER="<%= @admin_node_ip %>:<%= @web_port %>"
-IP=${HTTP_SERVER%%:*}
+IP="<%= @admin_node_ip %>"
 HOSTNAME=$(hostname -f)
 
 key_re='crowbar\.install\.key=([^ ]+)'

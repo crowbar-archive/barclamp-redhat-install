@@ -17,14 +17,17 @@ admin_ip = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").
 domain_name = node[:dns].nil? ? node[:domain] : (node[:dns][:domain] || node[:domain])
 web_port = node[:provisioner][:web_port]
 use_local_security = node[:provisioner][:use_local_security]
+os_token="#{node[:platform]}-#{node[:platform_version]}"
 
 image="redhat_install"
-rel_path= "redhat_dvd/#{image}"
+rel_path= "#{os_token}/install/#{image}"
 install_path = "/tftpboot/#{rel_path}"
 pxecfg_path="/tftpboot/discovery/pxelinux.cfg"
 
-admin_web="http://#{admin_ip}:#{web_port}/redhat_dvd"
-append_line="method=#{admin_web} ks=#{admin_web}/#{image}/compute.ks ksdevice=bootif initrd=../redhat_dvd/images/pxeboot/initrd.img"
+admin_web="http://#{admin_ip}:#{web_port}/#{os_token}/install"
+os_repo_web="#{admin_web}/Server"
+crowbar_repo_web="#{admin_web}/crowbar-extras"
+append_line="method=#{admin_web} ks=#{admin_web}/#{image}/compute.ks ksdevice=bootif initrd=../#{os_token}/install/images/pxeboot/initrd.img"
 
 if node[:provisioner][:use_serial_console]
   append_line = "console=tty0 console=ttyS1,115200n8 " + append_line
@@ -44,8 +47,10 @@ template "#{install_path}/compute.ks" do
   owner "root"
   group "root"
   variables(
-  :admin_node_ip => admin_ip,
-  :web_port => web_port)  
+            :admin_node_ip => admin_ip,
+            :web_port => web_port,
+            :os_repo => os_repo_web,
+            :crowbar_repo => crowbar_repo_web)  
 end
 
 template "#{pxecfg_path}/#{image}" do
@@ -55,7 +60,7 @@ template "#{pxecfg_path}/#{image}" do
   source "default.erb"
   variables(:append_line => "append " + append_line,
             :install_name => image,  
-            :kernel => "../redhat_dvd/images/pxeboot/vmlinuz")
+            :kernel => "../#{os_token}/install/images/pxeboot/vmlinuz")
 end
 
 template "#{install_path}/crowbar_join.sh" do
