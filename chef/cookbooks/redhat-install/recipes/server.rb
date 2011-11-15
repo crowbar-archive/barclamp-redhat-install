@@ -26,7 +26,7 @@ pxecfg_path="/tftpboot/discovery/pxelinux.cfg"
 
 admin_web="http://#{admin_ip}:#{web_port}/#{os_token}/install"
 os_repo_web="#{admin_web}/Server"
-crowbar_repo_web="#{admin_web}/crowbar-extras"
+crowbar_repo_web="http://#{admin_ip}:#{web_port}/#{os_token}/crowbar-extra"
 append_line="method=#{admin_web} ks=#{admin_web}/#{image}/compute.ks ksdevice=bootif initrd=../#{os_token}/install/images/pxeboot/initrd.img"
 
 if node[:provisioner][:use_serial_console]
