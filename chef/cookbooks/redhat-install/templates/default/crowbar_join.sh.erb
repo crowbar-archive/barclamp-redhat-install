@@ -144,7 +144,7 @@ if [[ ! -x /etc/init.d/bluepill ]]; then
     # Make rubygems do what we want.
     cat >/etc/gemrc <<EOF
 :sources:
-- http://$IP:3001/
+- http://$HTTP_SERVER/gemsite/
 gem: --no-ri --no-rdoc --bindir /usr/local/bin
 EOF
     gem install bluepill
